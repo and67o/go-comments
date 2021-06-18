@@ -1,0 +1,48 @@
+package internalhttp
+
+import (
+	"context"
+	"fmt"
+	"github.com/and67o/go-comments/internal/app"
+	"github.com/and67o/go-comments/internal/interfaces"
+	"github.com/and67o/go-comments/internal/router"
+	"net"
+	"net/http"
+)
+
+type Server struct {
+	app    *app.App
+	server *http.Server
+}
+
+func (s Server) Start() error {
+	err := s.server.ListenAndServe()
+	if err != nil {
+		return fmt.Errorf("server start: %w", err)
+	}
+	return err
+}
+
+func (s Server) Stop(ctx context.Context) error {
+	err := s.server.Shutdown(ctx)
+	if err != nil {
+		return fmt.Errorf("shutdown error: %w", err)
+	}
+
+	return nil
+}
+
+func New(app *app.App) interfaces.HTTPApp {
+	r := router.New(app)
+
+	httpConfig := app.Config.GetHTTP()
+	addr := net.JoinHostPort(httpConfig.Host, httpConfig.Port)
+fmt.Println(addr)
+	return &Server{
+		app: app,
+		server: &http.Server{
+			Addr:    addr,
+			Handler: r.GetRouter(),
+		},
+	}
+}
