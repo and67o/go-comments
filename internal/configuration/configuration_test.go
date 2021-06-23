@@ -1,7 +1,9 @@
 package configuration
 
 import (
+	"github.com/pkg/errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -16,11 +18,13 @@ func TestConfiguration(t *testing.T) {
 		for _, tst := range [...]test{
 			{
 				path: "",
-				err:  errEmptyPath,
+				err:  errors.New("path empty"),
 			},
 		} {
 			_, err := New(tst.path)
-			require.Equal(t, tst.err, err)
+			if err != nil {
+				require.Equal(t, tst.err.Error(), err.Error())
+			}
 		}
 	})
 
@@ -28,30 +32,32 @@ func TestConfiguration(t *testing.T) {
 		for _, tst := range [...]test{
 			{
 				path: "./wrong_path/config_test.toml",
+				err:  errors.New("open file: open ./wrong_path/config_test.toml: no such file or directory"),
 			},
 			{
 				path: "wrong_path",
+				err:  errors.New("open file: open wrong_path: no such file or directory"),
 			},
 		} {
 			_, err := New(tst.path)
-			require.Error(t, err)
+			if err != nil {
+				require.Equal(t, tst.err.Error(), err.Error())
+			}
 		}
 	})
 
 	t.Run("pass result", func(t *testing.T) {
 		for _, tst := range [...]test{
 			{
-				path: "./testdata/config_test.toml",
+				path: "./testdata/config_test.yaml",
 			},
 		} {
 			c, err := New(tst.path)
 			require.Nil(t, err)
 
-			require.Equal(t, c.DB.User, "db")
-			require.Equal(t, c.Logger.Level, "log")
-			require.Equal(t, c.Server.Host, "server")
-
-			require.Equal(t, c.Rabbit.User, "")
+			require.Equal(t, c.Server.Host, "lh")
+			require.Equal(t, c.Server.Port, "6767")
+			require.Equal(t, c.Server.Timeout.Read, time.Duration(15))
 		}
 	})
 }

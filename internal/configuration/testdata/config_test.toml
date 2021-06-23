@@ -1,8 +1,0 @@
-[db]
-db_user = "db"
-
-[logger]
-log_level = "log"
-
-[server]
-server_host="server"

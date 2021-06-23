@@ -18,5 +18,5 @@ type Router interface {
 }
 
 type Config interface {
-	GetHTTP() configuration.HTTPServer
+	GetHTTP() configuration.Server
 }

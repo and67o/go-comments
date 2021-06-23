@@ -8,6 +8,7 @@ import (
 	"github.com/and67o/go-comments/internal/router"
 	"net"
 	"net/http"
+	"time"
 )
 
 type Server struct {
@@ -37,12 +38,15 @@ func New(app *app.App) interfaces.HTTPApp {
 
 	httpConfig := app.Config.GetHTTP()
 	addr := net.JoinHostPort(httpConfig.Host, httpConfig.Port)
-fmt.Println(addr)
+
 	return &Server{
 		app: app,
 		server: &http.Server{
 			Addr:    addr,
 			Handler: r.GetRouter(),
+			ReadTimeout: app.Config.GetHTTP().Timeout.Read * time.Second,
+			WriteTimeout: app.Config.GetHTTP().Timeout.Write * time.Second,
+			IdleTimeout: app.Config.GetHTTP().Timeout.Idle * time.Second,
 		},
 	}
 }

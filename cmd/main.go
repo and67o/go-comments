@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"github.com/and67o/go-comments/internal/app"
 	"github.com/and67o/go-comments/internal/configuration"
+	"github.com/and67o/go-comments/internal/interfaces"
 	"github.com/and67o/go-comments/internal/server/internalhttp"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 var configFile string
@@ -23,14 +27,36 @@ func main() {
 		log.Fatal(err)
 	}
 
-	a := app.New(&config)
+	var ch = make(chan os.Signal, 1)
+
+	ctx, cancel := context.WithTimeout(context.Background(), config.Server.Timeout.Server)
+	defer cancel()
+
+	a := app.New(config)
 
 	httpServer := internalhttp.New(a)
 
-	err = httpServer.Start()
-	if err != nil {
-		//logg.Error("failed to start http server: " + err.Error())
-		os.Exit(1)
-	}
+	watchSignal(ch, httpServer, ctx)
+}
 
+func watchSignal(ch chan os.Signal, httpServer interfaces.HTTPApp, ctx context.Context )  {
+	signal.Notify(ch, os.Interrupt, syscall.SIGTSTP)
+
+	log.Println("server start")
+
+	go func() {
+		err := httpServer.Start()
+		if err != nil {
+			log.Fatalf("Server failed to start err: %v", err)
+		}
+	}()
+
+	interrupt := <-ch
+
+	log.Printf("Server is shutting down due to %+v\n", interrupt)
+
+	err := httpServer.Stop(ctx)
+	if err != nil {
+		log.Fatalf("Server was unable to gracefully shutdown due to err: %+v", err)
+	}
 }

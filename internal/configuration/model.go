@@ -1,14 +1,22 @@
 package configuration
 
+import "time"
+
 type Config struct {
-	HTTPServer
+	Server `yaml:"server"`
 }
 
-func (c *Config) GetHTTP() HTTPServer {
-	return c.HTTPServer
+func (c *Config) GetHTTP() Server {
+	return c.Server
 }
 
-type HTTPServer struct {
-	Host string `mapstructure:"server_host"`
-	Port string `mapstructure:"server_port"`
+type Server struct {
+	Host    string `yaml:"host"`
+	Port    string `yaml:"port"`
+	Timeout struct {
+		Server time.Duration `yaml:"server"`
+		Write  time.Duration `yaml:"write"`
+		Read   time.Duration `yaml:"read"`
+		Idle   time.Duration `yaml:"idle"`
+	} `yaml:"timeout"`
 }

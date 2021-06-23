@@ -1,32 +1,30 @@
 package configuration
 
 import (
-	"errors"
-	"fmt"
+	"gopkg.in/yaml.v2"
+	"os"
 
-	"github.com/spf13/viper"
+	"github.com/pkg/errors"
 )
 
-var errEmptyPath = errors.New("path empty")
-
-func New(path string) (Config, error) {
-	var configuration Config
-
+func New(path string) (*Config, error) {
+	configuration := &Config{}
 	if path == "" {
-		return configuration, errEmptyPath
+		return nil, errors.New("path empty")
 	}
 
-	viper.SetConfigFile(path)
-
-	err := viper.ReadInConfig()
+	file, err := os.Open(path)
 	if err != nil {
-		return configuration, fmt.Errorf("viper read error: %w", err)
+		return nil, errors.Wrap(err, "open file")
 	}
+	defer file.Close()
 
-	err = viper.Unmarshal(&configuration)
+	decoder := yaml.NewDecoder(file)
+
+	err = decoder.Decode(&configuration)
 	if err != nil {
-		return configuration, fmt.Errorf("viper unmarshal error: %w", err)
+		return nil, errors.Wrap(err, "open file")
 	}
 
-	return configuration, nil
+	return configuration, err
 }
