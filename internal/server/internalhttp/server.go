@@ -37,16 +37,15 @@ func New(app *app.App) interfaces.HTTPApp {
 	r := router.New(app)
 
 	httpConfig := app.Config.GetHTTP()
-	addr := net.JoinHostPort(httpConfig.Host, httpConfig.Port)
 
 	return &Server{
 		app: app,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: r.GetRouter(),
-			ReadTimeout: httpConfig.Timeout.Read * time.Second,
+			Addr:         net.JoinHostPort(httpConfig.Host, httpConfig.Port),
+			Handler:      r.GetRouter(),
+			ReadTimeout:  httpConfig.Timeout.Read * time.Second,
 			WriteTimeout: httpConfig.Timeout.Write * time.Second,
-			IdleTimeout: httpConfig.Timeout.Idle * time.Second,
+			IdleTimeout:  httpConfig.Timeout.Idle * time.Second,
 		},
 	}
 }
