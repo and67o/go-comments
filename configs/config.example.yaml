@@ -1,4 +1,8 @@
-server: {
-  server_host: "localhost",
-    server_port: 8004
-}
+server:
+  host: "127.0.0.1"
+  port: 50051
+  timeout:
+    server: 30
+    read: 15
+    write: 19
+    idle: 5

@@ -44,9 +44,9 @@ func New(app *app.App) interfaces.HTTPApp {
 		server: &http.Server{
 			Addr:    addr,
 			Handler: r.GetRouter(),
-			ReadTimeout: app.Config.GetHTTP().Timeout.Read * time.Second,
-			WriteTimeout: app.Config.GetHTTP().Timeout.Write * time.Second,
-			IdleTimeout: app.Config.GetHTTP().Timeout.Idle * time.Second,
+			ReadTimeout: httpConfig.Timeout.Read * time.Second,
+			WriteTimeout: httpConfig.Timeout.Write * time.Second,
+			IdleTimeout: httpConfig.Timeout.Idle * time.Second,
 		},
 	}
 }

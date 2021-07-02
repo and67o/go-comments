@@ -23,11 +23,11 @@ func (r *Router) GetRouter() *mux.Router {
 func New(app *app.App) interfaces.Router {
 	var router Router
 
-	router.app =app
-	r:=mux.NewRouter()
+	router.app = app
+	r := mux.NewRouter()
 	router.initRoutes(r)
 
-	router.muxRouter=r
+	router.muxRouter = r
 
 	return &router
 }
