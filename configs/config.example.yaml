@@ -6,3 +6,9 @@ server:
     read: 15
     write: 19
     idle: 5
+db_conf:
+  user: "admin",
+  password: "123",
+  database: "go_api",
+  host: "localhost",
+  port: 3306,

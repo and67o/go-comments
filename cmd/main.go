@@ -6,7 +6,9 @@ import (
 	"github.com/and67o/go-comments/internal/app"
 	"github.com/and67o/go-comments/internal/configuration"
 	"github.com/and67o/go-comments/internal/interfaces"
+	redis2 "github.com/and67o/go-comments/internal/redis"
 	"github.com/and67o/go-comments/internal/server/internalhttp"
+	storage2 "github.com/and67o/go-comments/internal/storage"
 	"log"
 	"os"
 	"os/signal"
@@ -27,19 +29,29 @@ func main() {
 		log.Fatal(err)
 	}
 
+	storage, err := storage2.New(config.GetDBConf())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	redis, err := redis2.New(config.GetRedis())
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var ch = make(chan os.Signal, 1)
 
 	ctx, cancel := context.WithTimeout(context.Background(), config.Server.Timeout.Server)
 	defer cancel()
 
-	a := app.New(config)
+	a := app.New(config, storage, redis)
 
 	httpServer := internalhttp.New(a)
 
 	watchSignal(ch, httpServer, ctx)
 }
 
-func watchSignal(ch chan os.Signal, httpServer interfaces.HTTPApp, ctx context.Context )  {
+func watchSignal(ch chan os.Signal, httpServer interfaces.HTTPApp, ctx context.Context) {
 	signal.Notify(ch, os.Interrupt, syscall.SIGTSTP)
 
 	log.Println("server start")

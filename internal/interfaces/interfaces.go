@@ -3,8 +3,12 @@ package interfaces
 import (
 	"context"
 	"github.com/and67o/go-comments/internal/configuration"
+	"github.com/and67o/go-comments/internal/models"
+	"github.com/and67o/go-comments/internal/service"
 	"github.com/gorilla/mux"
+	"github.com/jinzhu/gorm"
 	"net/http"
+	"time"
 )
 
 type HTTPApp interface {
@@ -20,10 +24,25 @@ type Router interface {
 
 type Config interface {
 	GetHTTP() configuration.Server
+	GetDBConf() configuration.DBConf
+	GetAuth() configuration.Auth
 }
 
-type ClientError interface {
-	Error() string
-	ResponseBody() ([]byte, error)
-	ResponseHeaders() (int, map[string]string)
+type Storage interface {
+	Close() error
+	GetDb() *gorm.DB
+	GetService() *service.UserService
+}
+
+type Redis interface {
+	Set(key string, value interface{}, expiration time.Duration) error
+	Get(key string) (interface{}, error)
+}
+
+type UserService interface {
+	GetByEmail(email string) (*models.User, error)
+	SaveUser(u models.User) (*models.User, error)
+	GetById(id int64) (*models.User, error)
+	GetUsers() (*[]models.User, error)
+	DeleteUser(id uint64) error
 }

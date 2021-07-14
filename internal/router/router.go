@@ -1,13 +1,19 @@
 package router
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/and67o/go-comments/internal/app"
-	"github.com/and67o/go-comments/internal/errors/che"
+	"github.com/and67o/go-comments/internal/errors/response"
+	"github.com/and67o/go-comments/internal/hash"
 	"github.com/and67o/go-comments/internal/interfaces"
+	"github.com/and67o/go-comments/internal/models"
+	"github.com/and67o/go-comments/internal/token"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type Router struct {
@@ -28,10 +34,60 @@ func (r *Router) CreateUser(w http.ResponseWriter, request *http.Request) {
 
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
-		// может проще передать error
-		che.Error(w,http.StatusInternalServerError, err.Error())
+		response.Error(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	var user models.User
+
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+	}
+
+	_, err = r.app.Storage.GetService().GetByEmail(user.Login)
+	if err == nil {
+		response.Error(w, http.StatusConflict, errors.New("email busy"))
+		return
+	}
+
+	hashedPassword, err := hash.HashPassword(user.Password)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, errors.New("hash error"))
+		return
+	}
+	user.Password = hashedPassword
+
+	newUser, err := r.app.Storage.GetService().SaveUser(user)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, errors.New(fmt.Sprintf("create user err: %v", err.Error())))
+		return
+	}
+
+	tokens, err := token.GetTokens(newUser.Id, r.app.Config.GetAuth())
+	if err != nil {
+		return
+	}
+
+	err = r.app.Redis.Set(
+		token.GetAccessKey(newUser.Id),
+		newUser.Id,
+		time.Unix(int64(r.app.Config.GetAuth().AccessExpire), 0).Sub(time.Now()),
+	)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+
+	err = r.app.Redis.Set(
+		token.GetRefreshKey(newUser.Id),
+		newUser.Id,
+		time.Unix(int64(r.app.Config.GetAuth().RefreshExpire), 0).Sub(time.Now()),
+	)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+
+	response.Json(w, http.StatusOK, tokens)
 }
 
 func New(app *app.App) interfaces.Router {
@@ -47,16 +103,14 @@ func New(app *app.App) interfaces.Router {
 }
 
 type appError struct {
-	Error error
+	Error   error
 	Message string
-	Code int
+	Code    int
 }
 
 type appHandler func(http.ResponseWriter, *http.Request) *appError
 
-
-
-func oleg(w http.ResponseWriter, r *http.Request) *appError  {
+func oleg(w http.ResponseWriter, r *http.Request) *appError {
 	return &appError{
 		Error:   errors.New("oleg"),
 		Message: "TEST",

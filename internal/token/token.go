@@ -1,6 +1,8 @@
 package token
 
 import (
+	"fmt"
+	"github.com/and67o/go-comments/internal/configuration"
 	"github.com/dgrijalva/jwt-go"
 	"time"
 )
@@ -9,16 +11,56 @@ type authClaims struct {
 	UserId int `json:"id"`
 	jwt.StandardClaims
 }
+type typeToken int
 
-func CreateToken(userId int, key string) (string, error) {
+const (
+	refreshType typeToken = iota
+	accessType
+)
+
+func GetAccessKey(userId int) string {
+	return fmt.Sprintf("%d-%d", userId, accessType)
+}
+
+func GetRefreshKey(userId int) string {
+	return fmt.Sprintf("%d-%d", userId, refreshType)
+}
+
+type Tokens struct {
+	accessToken         string
+	refreshToken        string
+	accessTokenExpires  time.Duration
+	refreshTokenExpires time.Duration
+}
+
+func GetTokens(userId int, conf configuration.Auth) (*Tokens, error) {
+	accessToken, err := CreateToken(userId, conf.AccessKey, conf.AccessExpire)
+	if err != nil {
+		return nil, err
+	}
+
+	refreshToken, err := CreateToken(userId, conf.AccessKey, conf.RefreshExpire)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Tokens{
+		accessToken:         accessToken,
+		refreshToken:        refreshToken,
+		accessTokenExpires:  conf.AccessExpire,
+		refreshTokenExpires: conf.RefreshExpire,
+	}, nil
+}
+
+func CreateToken(userId int, key string, minute time.Duration) (string, error) {
 	claims := authClaims{
 		UserId: userId,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Minute * 3).Unix(),
+			ExpiresAt: time.Now().Add(time.Minute * minute).Unix(),
 		},
 	}
-	oleg := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	token, err := oleg.SignedString([]byte(key))
+	tokensClaims := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token, err := tokensClaims.SignedString([]byte(key))
 	if err != nil {
 		return "", err
 	}
