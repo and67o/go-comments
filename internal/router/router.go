@@ -21,12 +21,73 @@ type Router struct {
 	app       *app.App
 }
 
+func (r *Router) LogOut(w http.ResponseWriter, request *http.Request) {
+	panic("implement me")
+}
+
+func (r *Router) Refresh(w http.ResponseWriter, request *http.Request) {
+	panic("implement me")
+}
+
 func (r *Router) Hello(w http.ResponseWriter, _ *http.Request) {
 	panic("implement me")
 }
 
 func (r *Router) GetRouter() *mux.Router {
 	return r.muxRouter
+}
+
+func (r *Router) Login(w http.ResponseWriter, request *http.Request) {
+	defer request.Body.Close()
+
+	body, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	var user models.User
+
+	err = json.Unmarshal(body, &user)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, err)
+	}
+
+	userDb, err := r.app.Storage.GetByEmail(user.Login)
+	if err != nil {
+		response.Error(w, http.StatusUnprocessableEntity, errors.New("email busy"))
+		return
+	}
+
+	err = token.VerifyPassword(user.Password, userDb.Password)
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, err)
+	}
+
+	tokens, err := token.GetTokens(userDb.Id, r.app.Config.GetAuth())
+	if err != nil {
+		return
+	}
+
+	err = r.app.Redis.Set(
+		token.GetAccessKey(userDb.Id),
+		userDb.Id,
+		time.Unix(int64(r.app.Config.GetAuth().AccessExpire), 0).Sub(time.Now()),
+	)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+
+	err = r.app.Redis.Set(
+		token.GetRefreshKey(userDb.Id),
+		userDb.Id,
+		time.Unix(int64(r.app.Config.GetAuth().RefreshExpire), 0).Sub(time.Now()),
+	)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, err)
+	}
+
+	response.Json(w, http.StatusOK, tokens)
 }
 
 func (r *Router) CreateUser(w http.ResponseWriter, request *http.Request) {
@@ -45,7 +106,7 @@ func (r *Router) CreateUser(w http.ResponseWriter, request *http.Request) {
 		response.Error(w, http.StatusInternalServerError, err)
 	}
 
-	_, err = r.app.Storage.GetService().GetByEmail(user.Login)
+	_, err = r.app.Storage.GetByEmail(user.Login)
 	if err == nil {
 		response.Error(w, http.StatusConflict, errors.New("email busy"))
 		return
@@ -58,7 +119,7 @@ func (r *Router) CreateUser(w http.ResponseWriter, request *http.Request) {
 	}
 	user.Password = hashedPassword
 
-	newUser, err := r.app.Storage.GetService().SaveUser(user)
+	newUser, err := r.app.Storage.SaveUser(user)
 	if err != nil {
 		response.Error(w, http.StatusBadRequest, errors.New(fmt.Sprintf("create user err: %v", err.Error())))
 		return

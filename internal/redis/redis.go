@@ -19,6 +19,7 @@ func New(conf configuration.Redis) (interfaces.Redis, error) {
 	})
 
 	_, err := client.Ping().Result()
+
 	if err != nil {
 		return nil, err
 	}
@@ -26,10 +27,10 @@ func New(conf configuration.Redis) (interfaces.Redis, error) {
 	return &Redis{client}, nil
 }
 
-func (r *Redis) Get(key string) {
-
+func (r *Redis) Get(key string) (interface{},error) {
+	return nil, nil
 }
 
-func (r *Redis) Set(key string, value interface{}, expiration time.Duration) {
-
+func (r *Redis) Set(key string, value interface{}, expiration time.Duration) error {
+	return nil
 }

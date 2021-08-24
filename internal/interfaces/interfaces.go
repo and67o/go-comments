@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/and67o/go-comments/internal/configuration"
 	"github.com/and67o/go-comments/internal/models"
-	"github.com/and67o/go-comments/internal/service"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	"net/http"
@@ -19,6 +18,9 @@ type HTTPApp interface {
 type Router interface {
 	Hello(w http.ResponseWriter, _ *http.Request)
 	CreateUser(w http.ResponseWriter, _ *http.Request)
+	Login(w http.ResponseWriter, request *http.Request)
+	LogOut(w http.ResponseWriter, request *http.Request)
+	Refresh(w http.ResponseWriter, request *http.Request)
 	GetRouter() *mux.Router
 }
 
@@ -31,7 +33,7 @@ type Config interface {
 type Storage interface {
 	Close() error
 	GetDb() *gorm.DB
-	GetService() *service.UserService
+	UserService
 }
 
 type Redis interface {

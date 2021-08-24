@@ -43,8 +43,8 @@ type Auth struct {
 	RefreshExpire time.Duration `yaml:"refresh_expire"`
 }
 type Redis struct {
-	Host    string `yaml:"host"`
-	Port    string `yaml:"port"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
 	Password string `yaml:"password"`
 }
 

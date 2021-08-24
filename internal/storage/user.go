@@ -1,23 +1,10 @@
-package service
+package storage
 
 import (
-	"github.com/and67o/go-comments/internal/interfaces"
 	"github.com/and67o/go-comments/internal/models"
-	"github.com/jinzhu/gorm"
 )
 
-type UserService struct {
-	db *gorm.DB
-}
-
-func NewUserService(db *gorm.DB) interfaces.UserService {
-	var service UserService
-
-	service.db = db
-	return &service
-}
-
-func (s *UserService) GetByEmail(email string) (*models.User, error) {
+func (s *Storage) GetByEmail(email string) (*models.User, error) {
 	user := models.User{}
 
 	err := s.db.Model(models.User{}).
@@ -32,7 +19,7 @@ func (s *UserService) GetByEmail(email string) (*models.User, error) {
 	return &user, err
 }
 
-func (s *UserService) SaveUser(u models.User) (*models.User, error) {
+func (s *Storage) SaveUser(u models.User) (*models.User, error) {
 	var err error
 
 	err = s.db.Create(&u).Error
@@ -43,7 +30,7 @@ func (s *UserService) SaveUser(u models.User) (*models.User, error) {
 	return &u, nil
 }
 
-func (s *UserService) GetById(id int64) (*models.User, error) {
+func (s *Storage) GetById(id int64) (*models.User, error) {
 	var user models.User
 
 	err := s.db.First(&user, id).Error
@@ -54,7 +41,7 @@ func (s *UserService) GetById(id int64) (*models.User, error) {
 	return &user, err
 }
 
-func (s *UserService) GetUsers() (*[]models.User, error) {
+func (s *Storage) GetUsers() (*[]models.User, error) {
 	var users []models.User
 	err := s.db.Find(&users).Error
 	if err != nil {
@@ -64,7 +51,7 @@ func (s *UserService) GetUsers() (*[]models.User, error) {
 	return &users, err
 }
 
-func (s *UserService) DeleteUser(id uint64) error {
+func (s *Storage) DeleteUser(id uint64) error {
 	err := s.db.Delete(models.User{}, id).Error
 	if err != nil {
 		return err

@@ -21,7 +21,7 @@ func New(path string) (*Config, error) {
 
 	decoder := yaml.NewDecoder(file)
 
-	err = decoder.Decode(&configuration)
+	err = decoder.Decode(configuration)
 	if err != nil {
 		return nil, errors.Wrap(err, "open file")
 	}

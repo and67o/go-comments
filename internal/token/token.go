@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/and67o/go-comments/internal/configuration"
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -31,6 +32,10 @@ type Tokens struct {
 	refreshToken        string
 	accessTokenExpires  time.Duration
 	refreshTokenExpires time.Duration
+}
+
+func VerifyPassword(userPassword string, dbPassword string) error {
+	return bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(userPassword))
 }
 
 func GetTokens(userId int, conf configuration.Auth) (*Tokens, error) {

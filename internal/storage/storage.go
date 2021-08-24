@@ -4,14 +4,12 @@ import (
 	"fmt"
 	"github.com/and67o/go-comments/internal/configuration"
 	"github.com/and67o/go-comments/internal/interfaces"
-	"github.com/and67o/go-comments/internal/service"
 	_ "github.com/go-sql-driver/mysql" // nolint: gci
 	"github.com/jinzhu/gorm"
 )
 
 type Storage struct {
-	db *gorm.DB
-	service *interfaces.UserService
+	db      *gorm.DB
 }
 
 const driverName = "mysql"
@@ -23,8 +21,7 @@ func New(config configuration.DBConf) (interfaces.Storage, error) {
 		return nil, fmt.Errorf("connect db: %w", err)
 	}
 	return &Storage{
-		db: db,
-		service: service.NewUserService(db),
+		db:      db,
 	}, nil
 }
 
@@ -39,10 +36,6 @@ func (s *Storage) Close() error {
 
 func (s *Storage) GetDb() *gorm.DB {
 	return s.db
-}
-
-func (s *Storage) GetService() *service.UserService {
-	return s.service
 }
 
 func dataSourceName(config configuration.DBConf) string {
