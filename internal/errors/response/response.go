@@ -20,10 +20,17 @@ func response(w http.ResponseWriter, code int, data interface{}, errHTML error) 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(code)
 
-	err := json.NewEncoder(w).Encode(httpResult{
-		Data:  data,
-		Error: errHTML.Error(),
-	})
+	var response httpResult
+
+	if errHTML != nil {
+		response.Error = errHTML.Error()
+	}
+
+	if data != nil {
+		response.Data = data
+	}
+
+	err := json.NewEncoder(w).Encode(response)
 	if err != nil {
 		_, _ = fmt.Fprintf(w, "parse error - %s", err.Error())
 	}

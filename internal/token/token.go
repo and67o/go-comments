@@ -28,10 +28,10 @@ func GetRefreshKey(userId int) string {
 }
 
 type Tokens struct {
-	accessToken         string
-	refreshToken        string
-	accessTokenExpires  time.Duration
-	refreshTokenExpires time.Duration
+	AccessToken         string        `json:"access_token"`
+	RefreshToken        string        `json:"refresh_token"`
+	AccessTokenExpires  time.Duration `json:"access_token_expires"`
+	RefreshTokenExpires time.Duration `json:"refresh_token_expires"`
 }
 
 func VerifyPassword(userPassword string, dbPassword string) error {
@@ -50,10 +50,10 @@ func GetTokens(userId int, conf configuration.Auth) (*Tokens, error) {
 	}
 
 	return &Tokens{
-		accessToken:         accessToken,
-		refreshToken:        refreshToken,
-		accessTokenExpires:  conf.AccessExpire,
-		refreshTokenExpires: conf.RefreshExpire,
+		AccessToken:         accessToken,
+		RefreshToken:        refreshToken,
+		AccessTokenExpires:  conf.AccessExpire,
+		RefreshTokenExpires: conf.RefreshExpire,
 	}, nil
 }
 

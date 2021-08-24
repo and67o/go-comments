@@ -91,11 +91,15 @@ func (r *Router) Login(w http.ResponseWriter, request *http.Request) {
 }
 
 func (r *Router) CreateUser(w http.ResponseWriter, request *http.Request) {
-	defer request.Body.Close()
-
 	body, err := ioutil.ReadAll(request.Body)
+	defer request.Body.Close()
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if len(body) == 0 {
+		response.Error(w, http.StatusBadRequest, errors.New("empty request"))
 		return
 	}
 
@@ -103,7 +107,8 @@ func (r *Router) CreateUser(w http.ResponseWriter, request *http.Request) {
 
 	err = json.Unmarshal(body, &user)
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, err)
+		response.Error(w, http.StatusBadRequest, err)
+		return
 	}
 
 	_, err = r.app.Storage.GetByEmail(user.Login)
@@ -167,16 +172,6 @@ type appError struct {
 	Error   error
 	Message string
 	Code    int
-}
-
-type appHandler func(http.ResponseWriter, *http.Request) *appError
-
-func oleg(w http.ResponseWriter, r *http.Request) *appError {
-	return &appError{
-		Error:   errors.New("oleg"),
-		Message: "TEST",
-		Code:    500,
-	}
 }
 
 func (r *Router) initRoutes(router *mux.Router) {

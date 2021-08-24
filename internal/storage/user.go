@@ -7,11 +7,9 @@ import (
 func (s *Storage) GetByEmail(email string) (*models.User, error) {
 	user := models.User{}
 
-	err := s.db.Model(models.User{}).
-		Where("email = ?", email).
-		Take(&user).
-		Error
-
+	err:= s.db.Where(&models.User{
+		Login:    email,
+	}).First(&user).Error
 	if err != nil {
 		return &user, err
 	}
@@ -22,7 +20,9 @@ func (s *Storage) GetByEmail(email string) (*models.User, error) {
 func (s *Storage) SaveUser(u models.User) (*models.User, error) {
 	var err error
 
-	err = s.db.Create(&u).Error
+	err = s.db.
+		Model(models.User{}).
+		Create(&u).Error
 	if err != nil {
 		return nil, err
 	}
